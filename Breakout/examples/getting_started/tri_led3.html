@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8 />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+		<title>LED PWM</title>
+
+		<link href="style.css" rel="stylesheet" type="text/css" />
+
+		<link href="../libs/jquery-ui/jquery-ui-1.10.0.custom.css" rel="stylesheet" type="text/css"/>
+		<script src="../libs/jquery-1.9.0.min.js"></script>
+
+        <script src="js/jquery.knob.js"></script>
+
+		<script src="../../dist/Breakout.js"></script>
+		<script src="../libs/jquery-ui/jquery-ui-1.10.0.custom.min.js"></script>
+		<script src="../libs/jquery.ui.touch-punch.min.js"></script>
+
+
+        <script>
+            $(function($) {
+
+                $(".knob").knob({
+                    change : function (value) {
+						var id = this.$.attr('id');
+                        //changeLed(value / 100, id);
+						console.log(id, value);
+                        //console.log(this.$.attr('id'));
+                    },
+                    release : function (value) {
+                        //console.log(this.$.attr('id'));
+                        //console.log("release : " + value);
+                    },
+                    cancel : function () {
+                        console.log("cancel : ", this);
+                    },
+                    draw : function () {
+						//console.log("draw");
+                    }
+                });
+            });
+        </script>
+		
+		<script type="text/javascript">
+		$(document).ready(function() {
+			// Declare these variables so you don't have
+			// to type the full namespace
+			var IOBoard = BO.IOBoard;
+			var IOBoardEvent = BO.IOBoardEvent;
+			var Pin = BO.Pin;
+
+			// Set to true to print debug messages to console
+			BO.enableDebugging = false; 
+
+			// If you are not serving this file from the same computer
+			// that the Arduino Leonardo board is connected to, replace
+			// window.location.hostname with the IP address or hostname
+			// of the computer that the Arduino board is connected to.
+			var host = window.location.hostname;
+			// if the file is opened locally, set the host to "localhost"
+			if (window.location.protocol.indexOf("file:") === 0) {
+				host = "localhost";
+			}
+			var arduino = new IOBoard(host, 8887);
+			
+			// Variables
+			var ledred;
+			var ledgreen;
+			var ledblue;		
+			
+			// Listen for the IOBoard READY event which indicates the IOBoard
+			// is ready to send and receive data
+			arduino.addEventListener(IOBoardEvent.READY, onReady);
+
+			function onReady(event) {
+				// Remove the event listener because it is no longer needed
+				arduino.removeEventListener(IOBoardEvent.READY, onReady);
+
+				// Set Pin 11 to PWM
+				arduino.setDigitalPinMode(9, Pin.PWM);
+				arduino.setDigitalPinMode(10, Pin.PWM);
+				arduino.setDigitalPinMode(11, Pin.PWM);
+
+				// Create an LED object to interface with the LED wired
+				// to the I/O board
+				ledred = arduino.getDigitalPin(9);
+				ledgreen = arduino.getDigitalPin(10);
+				ledblue = arduino.getDigitalPin(11);
+			}
+			
+			window.changeLed = function(intensity, ledname) {
+				console.log(intensity, ledname);
+				if (ledname == "hour") {
+					ledred.value = intensity;
+				};
+				if (ledname == "minute") {
+					ledgreen.value = intensity;
+				};
+				if (ledname == "second") {
+					ledblue.value = intensity;
+				};
+			}
+		});
+
+		</script>
+	</head>
+	<body>
+		<h2>Daddys and Charlies spinny light thingy</h2>
+		<hr />
+		<div style="text-align:center;">
+			<input id="hour"   class="knob hour"   data-angleOffset=-125 data-angleArc=250 data-fgColor="#ff0000" data-linecap="round" value="0">
+			<input id="minute" class="knob minute" data-angleOffset=-125 data-angleArc=250 data-fgColor="#00ff00" data-linecap="round" value="0">
+			<input id="second" class="knob second" data-angleOffset=-125 data-angleArc=250 data-fgColor="#0000ff" data-linecap="round" value="0">
+		</div>
+	</body>
+</html>

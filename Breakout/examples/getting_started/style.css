@@ -1,0 +1,36 @@
+body {
+    margin: 15px;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 1.5em;
+    color: #666;
+}
+h2 {
+    padding-left: 0px;
+    font-weight: normal;
+    font-size: 28px;
+    color: #00ff77;
+}
+.ledBtns {
+    padding: 5px;
+    font-size: 16px;
+    width: 85px;
+    color: #00AEFF;
+}
+#state {
+    color: #00AEFF;
+    font-size: 22px;
+}
+.container {
+    background-color: #f7f7f7;
+    padding: 0 10px 20px 10px;
+    border: 1px dotted #CCC;
+    width: 270px;
+    margin-top: 20px;
+}
+.spacer {
+    margin-left: 5px;
+}
+#slider {
+    margin: 20px;
+}

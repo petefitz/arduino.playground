@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset=utf-8 />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.0/jquery.min.js"></script>
+        <script src="js/jquery.knob.js"></script>
+        <script>
+            $(function($) {
+
+                $(".knob").knob({
+                    change : function (value) {
+                        changeLed(value / 100);
+						console.log(value);
+                    },
+                    release : function (value) {
+                        //console.log(this.$.attr('value'));
+                        console.log("release : " + value);
+                    },
+                    cancel : function () {
+                        console.log("cancel : ", this);
+                    },
+                    draw : function () {
+
+                        // "tron" case
+                        if(this.$.data('skin') == 'tron') {
+
+                            var a = this.angle(this.cv)  // Angle
+                                , sa = this.startAngle          // Previous start angle
+                                , sat = this.startAngle         // Start angle
+                                , ea                            // Previous end angle
+                                , eat = sat + a                 // End angle
+                                , r = 1;
+
+                            this.g.lineWidth = this.lineWidth;
+
+                            this.o.cursor
+                                && (sat = eat - 0.3)
+                                && (eat = eat + 0.3);
+
+                            if (this.o.displayPrevious) {
+                                ea = this.startAngle + this.angle(this.v);
+                                this.o.cursor
+                                    && (sa = ea - 0.3)
+                                    && (ea = ea + 0.3);
+                                this.g.beginPath();
+                                this.g.strokeStyle = this.pColor;
+                                this.g.arc(this.xy, this.xy, this.radius - this.lineWidth, sa, ea, false);
+                                this.g.stroke();
+                            }
+
+                            this.g.beginPath();
+                            this.g.strokeStyle = r ? this.o.fgColor : this.fgColor ;
+                            this.g.arc(this.xy, this.xy, this.radius - this.lineWidth, sat, eat, false);
+                            this.g.stroke();
+
+                            this.g.lineWidth = 2;
+                            this.g.beginPath();
+                            this.g.strokeStyle = this.o.fgColor;
+                            this.g.arc( this.xy, this.xy, this.radius - this.lineWidth + 1 + this.lineWidth * 2 / 3, 0, 2 * Math.PI, false);
+                            this.g.stroke();
+
+                            return false;
+                        }
+                    }
+                });
+
+                // Example of infinite knob, iPod click wheel
+                var v, up=0,down=0,i=0
+                    ,$idir = $("div.idir")
+                    ,$ival = $("div.ival")
+                    ,incr = function() { i++; $idir.show().html("+").fadeOut(); $ival.html(i); }
+                    ,decr = function() { i--; $idir.show().html("-").fadeOut(); $ival.html(i); };
+                $("input.infinite").knob(
+                                    {
+                                    min : 0
+                                    , max : 20
+                                    , stopper : false
+                                    , change : function () {
+                                                    if(v > this.cv){
+                                                        if(up){
+                                                            decr();
+                                                            up=0;
+                                                        }else{up=1;down=0;}
+                                                    } else {
+                                                        if(v < this.cv){
+                                                            if(down){
+                                                                incr();
+                                                                down=0;
+                                                            }else{down=1;up=0;}
+                                                        }
+                                                    }
+                                                    v = this.cv;
+                                                }
+                                    });
+            });
+        </script>
+
+<style type="text/css">
+body {
+    margin: 15px;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 1.5em;
+    color: #666;
+}
+h2 {
+    padding-left: 0px;
+    font-weight: normal;
+    font-size: 28px;
+    color: #ffff00;
+}
+.ledBtns {
+    padding: 5px;
+    font-size: 16px;
+    width: 85px;
+    color: #00AEFF;
+}
+#state {
+    color: #00AEFF;
+    font-size: 22px;
+}
+.container {
+    background-color: #f7f7f7;
+    padding: 0 10px 20px 10px;
+    border: 1px dotted #CCC;
+    width: 270px;
+    margin-top: 20px;
+}
+.spacer {
+    margin-left: 5px;
+}
+#slider {
+    margin: 20px;
+}
+</style>
+
+<title>LED PWM</title>
+
+<script src="../../dist/Breakout.js"></script>
+<script src="../libs/jquery-1.9.0.min.js"></script>
+<script src="../libs/jquery-ui/jquery-ui-1.10.0.custom.min.js"></script>
+<script src="../libs/jquery.ui.touch-punch.min.js"></script>
+<link href="../libs/jquery-ui/jquery-ui-1.10.0.custom.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript">
+$(document).ready(function() {
+
+    // Declare these variables so you don't have
+    // to type the full namespace
+    var IOBoard = BO.IOBoard;
+    var IOBoardEvent = BO.IOBoardEvent;
+    var Pin = BO.Pin;
+
+    // Set to true to print debug messages to console
+    BO.enableDebugging = false; 
+
+    // If you are not serving this file from the same computer
+    // that the Arduino Leonardo board is connected to, replace
+    // window.location.hostname with the IP address or hostname
+    // of the computer that the Arduino board is connected to.
+    var host = window.location.hostname;
+    // if the file is opened locally, set the host to "localhost"
+    if (window.location.protocol.indexOf("file:") === 0) {
+        host = "localhost";
+    }
+    var arduino = new IOBoard(host, 8887);
+    
+    // Variables
+    var led;
+    
+    // Listen for the IOBoard READY event which indicates the IOBoard
+    // is ready to send and receive data
+    arduino.addEventListener(IOBoardEvent.READY, onReady);
+
+    function onReady(event) {
+        // Remove the event listener because it is no longer needed
+        arduino.removeEventListener(IOBoardEvent.READY, onReady);
+
+        // Set Pin 11 to PWM
+        arduino.setDigitalPinMode(11, Pin.PWM);
+
+        // Create an LED object to interface with the LED wired
+        // to the I/O board
+        led = arduino.getDigitalPin(11);
+        
+        // Use jQuery to get a reference to the elements
+        // and listen for events 
+        $('#btnStop').click(function() { changeLed(0.0); });
+        $('#btnFull').click(function() { changeLed(1.0); });
+        $('#btnHalf').click(function() { changeLed(0.5); });
+
+        $("#slider").slider({
+            step: 0.05,
+            min : 0.0,
+            max : 1
+            });
+
+        $('#value').text("Value: 0.0");
+    }
+    
+    $( "#slider" ).bind( "slide", function(event, ui) {
+        var value = ui.value;
+            $('#value').text("Value: " + value.toFixed(2));
+            led.value = value;
+    })
+    
+    window.changeLed = function(intensity) {
+        led.value = intensity;
+        $("#slider").slider( "option", "value", intensity);
+        $('#value').text("Value: " + intensity);
+    }
+    
+/* If you want to switch the LED to an given brightness 
+*   function turnLedOn() {
+*       // Turn the LED off
+*       led.value = 0.6; // 0 = Pin.LOW, 1 = Pin.HIGH
+*       $("#slider").slider( "option", "value", 0.6);
+*       $('#value').text("Value: " + 0.6);
+*   }
+*/  
+});
+
+</script>
+
+</head>
+<body>
+    <h2>Daddys and Charlies spinny light thingy</h2>
+        
+  
+        
+            <div style="position:relative;width:350px;margin:auto">
+                <div style="position:absolute;left:10px;top:10px">
+                    <input class="knob hour" data-min="0" data-max="24" data-bgColor="#333" data-fgColor="#ff0000" data-displayInput=false data-width="300" data-height="300" data-thickness=".3">
+                </div>
+                <div style="position:absolute;left:60px;top:60px">
+                    <input class="knob minute" data-min="0" data-max="60" data-bgColor="#333" data-fgColor="#00ff00" data-displayInput=false data-width="200" data-height="200" data-thickness=".45">
+                </div>
+                <div style="position:absolute;left:110px;top:110px">
+                    <input class="knob second" data-min="0" data-max="60" data-bgColor="#333" data-fgColor="#0000ff" data-displayInput=false data-width="100" data-height="100" data-thickness=".3">
+                </div>
+            </div>		
+<!--		<input class="knob" data-angleOffset=-160 data-angleArc=320 data-fgColor="#1105FF" data-linecap="round" value="35"> 			-->
+</body>
+</html>
